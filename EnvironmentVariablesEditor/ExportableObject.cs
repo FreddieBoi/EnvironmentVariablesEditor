@@ -1,13 +1,10 @@
-﻿using System;
-using System.ComponentModel;
-using System.Xml.Serialization;
+﻿using System.Xml.Serialization;
 
-namespace EnvironmentVariablesEditor
-{
+namespace EnvironmentVariablesEditor {
+
     [XmlInclude(typeof(PathEntry))]
     [XmlInclude(typeof(EnvironmentVariable))]
-    public class ExportableObject
-    {
+    public class ExportableObject {
 
     }
 

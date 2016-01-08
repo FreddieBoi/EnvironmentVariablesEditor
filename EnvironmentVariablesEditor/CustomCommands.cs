@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Input;
+﻿using System.Windows.Input;
 
-namespace EnvironmentVariablesEditor
-{
+namespace EnvironmentVariablesEditor {
 
-    public static class CustomCommands
-    {
+    public static class CustomCommands {
 
         public static RoutedCommand Load = new RoutedCommand();
 
@@ -19,6 +13,16 @@ namespace EnvironmentVariablesEditor
         public static RoutedCommand Export = new RoutedCommand();
 
         public static RoutedCommand Restore = new RoutedCommand();
+
+        public static RoutedCommand Edit = new RoutedCommand();
+
+        public static RoutedCommand Cut = new RoutedCommand();
+
+        public static RoutedCommand Copy = new RoutedCommand();
+
+        public static RoutedCommand Paste = new RoutedCommand();
+
+        public static RoutedCommand Delete = new RoutedCommand();
 
     }
 

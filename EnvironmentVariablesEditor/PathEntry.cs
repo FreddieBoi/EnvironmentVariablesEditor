@@ -1,45 +1,39 @@
 ﻿using System.ComponentModel;
 using System.Xml.Serialization;
 
-namespace EnvironmentVariablesEditor
-{
+namespace EnvironmentVariablesEditor {
 
-    public class PathEntry : ExportableObject, IEditableObject
-    {
+    public class PathEntry : ExportableObject, IEditableObject {
 
-        private PathEntry _copy;
+        private PathEntry copy;
 
         [XmlAttribute]
         public string Value { get; set; }
 
-        public PathEntry()
-        {
+        public PathEntry() {
 
         }
 
-        public PathEntry(string value)
-        {
+        public PathEntry(string value) {
             Value = value;
         }
 
         #region IEditableObject Members
 
-        public void BeginEdit()
-        {
-            if (_copy == null)
-                _copy = new PathEntry();
+        public void BeginEdit() {
+            if (copy == null) {
+                copy = new PathEntry();
+            }
 
-            _copy.Value = Value;
+            copy.Value = Value;
         }
 
-        public void CancelEdit()
-        {
-            Value = _copy.Value;
+        public void CancelEdit() {
+            Value = copy.Value;
         }
 
-        public void EndEdit()
-        {
-            _copy.Value = null;
+        public void EndEdit() {
+            copy.Value = null;
         }
 
         #endregion IEditableObject Members

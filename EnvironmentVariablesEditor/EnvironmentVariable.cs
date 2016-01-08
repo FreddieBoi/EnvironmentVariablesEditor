@@ -2,13 +2,11 @@
 using System.ComponentModel;
 using System.Xml.Serialization;
 
-namespace EnvironmentVariablesEditor
-{
+namespace EnvironmentVariablesEditor {
 
-    public class EnvironmentVariable : ExportableObject, IEditableObject
-    {
+    public class EnvironmentVariable : ExportableObject, IEditableObject {
 
-        private EnvironmentVariable _copy;
+        private EnvironmentVariable copy;
 
         [XmlAttribute]
         public string Key { get; set; }
@@ -19,13 +17,11 @@ namespace EnvironmentVariablesEditor
         [XmlAttribute]
         public EnvironmentVariableTarget Target { get; set; }
 
-        public EnvironmentVariable()
-        {
+        public EnvironmentVariable() {
 
         }
 
-        public EnvironmentVariable(string key, string value, EnvironmentVariableTarget target)
-        {
+        public EnvironmentVariable(string key, string value, EnvironmentVariableTarget target) {
             Key = key;
             Value = value;
             Target = target;
@@ -33,27 +29,25 @@ namespace EnvironmentVariablesEditor
 
         #region IEditableObject Members
 
-        public void BeginEdit()
-        {
-            if (_copy == null)
-                _copy = new EnvironmentVariable();
+        public void BeginEdit() {
+            if (copy == null) {
+                copy = new EnvironmentVariable();
+            }
 
-            _copy.Key = Key;
-            _copy.Value = Value;
-            _copy.Target = Target;
+            copy.Key = Key;
+            copy.Value = Value;
+            copy.Target = Target;
         }
 
-        public void CancelEdit()
-        {
-            Value = _copy.Value;
-            Key = _copy.Key;
-            Target = _copy.Target;
+        public void CancelEdit() {
+            Value = copy.Value;
+            Key = copy.Key;
+            Target = copy.Target;
         }
 
-        public void EndEdit()
-        {
-            _copy.Key = null;
-            _copy.Value = null;
+        public void EndEdit() {
+            copy.Key = null;
+            copy.Value = null;
         }
 
         #endregion IEditableObject Members

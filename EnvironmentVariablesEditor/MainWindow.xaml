@@ -1,21 +1,41 @@
 ﻿<Window x:Class="EnvironmentVariablesEditor.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:n="clr-namespace:EnvironmentVariablesEditor"
-        Title="Environment Variables Editor" ResizeMode="CanResize" Width="800" Height="600" Loaded="WindowLoaded" Closing="WindowClosing">
+        Title="EnvironmentVariablesEditor" ResizeMode="CanResize" Width="1280" Height="720" Loaded="WindowLoaded" Closing="WindowClosing">
     <Window.CommandBindings>
         <CommandBinding Command="n:CustomCommands.Load" Executed="Load" />
         <CommandBinding Command="n:CustomCommands.Save" Executed="Save" />
         <CommandBinding Command="n:CustomCommands.About" Executed="About" />
         <CommandBinding Command="n:CustomCommands.Export" Executed="Export" />
         <CommandBinding Command="n:CustomCommands.Restore" Executed="Restore" />
+        <CommandBinding Command="n:CustomCommands.Edit" Executed="Edit" />
+        <CommandBinding Command="n:CustomCommands.Cut" Executed="Cut" />
+        <CommandBinding Command="n:CustomCommands.Copy" Executed="Copy" />
+        <CommandBinding Command="n:CustomCommands.Paste" Executed="Paste" />
+        <CommandBinding Command="n:CustomCommands.Delete" Executed="Delete" />
     </Window.CommandBindings>
     <Window.InputBindings>
-        <KeyBinding Key="L" Modifiers="Control" Command="n:CustomCommands.Load"/>
-        <KeyBinding Key="S" Modifiers="Control" Command="n:CustomCommands.Save"/>
-        <KeyBinding Key="F1" Command="n:CustomCommands.About"/>
-        <KeyBinding Key="E" Modifiers="Control+Shift" Command="n:CustomCommands.Export"/>
-        <KeyBinding Key="R" Modifiers="Control+Shift" Command="n:CustomCommands.Restore"/>
+        <KeyBinding Key="L" Modifiers="Control" Command="n:CustomCommands.Load" />
+        <KeyBinding Key="S" Modifiers="Control" Command="n:CustomCommands.Save" />
+        <KeyBinding Key="F1" Command="n:CustomCommands.About" />
+        <KeyBinding Key="E" Modifiers="Control+Shift" Command="n:CustomCommands.Export" />
+        <KeyBinding Key="R" Modifiers="Control+Shift" Command="n:CustomCommands.Restore" />
+        <KeyBinding Key="E" Modifiers="Control" Command="n:CustomCommands.Edit" />
+        <KeyBinding Key="X" Modifiers="Control" Command="n:CustomCommands.Cut" />
+        <KeyBinding Key="C" Modifiers="Control" Command="n:CustomCommands.Copy" />
+        <KeyBinding Key="V" Modifiers="Control" Command="n:CustomCommands.Paste" />
+        <KeyBinding Key="Delete" Command="n:CustomCommands.Delete" />
     </Window.InputBindings>
+    <Window.Resources>
+        <ContextMenu x:Key="dataGridContextMenu">
+            <MenuItem Header="Edit" Click="EditMenuItemClick" InputGestureText="Ctrl+E" />
+            <Separator />
+            <MenuItem Header="Cut" Click="CutMenuItemClick" InputGestureText="Ctrl+X" />
+            <MenuItem Header="Copy" Click="CopyMenuItemClick" InputGestureText="Ctrl+C" />
+            <MenuItem Header="Paste" Click="PasteMenuItemClick" InputGestureText="Ctrl+V" />
+            <MenuItem Header="Delete" Click="DeleteMenuItemClick" InputGestureText="Del" />
+        </ContextMenu>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -48,7 +68,7 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <Label Grid.Row="0" Foreground="White">Path Environment Variable Entries</Label>
-                <DataGrid Grid.Row="1" Name="pathDataGrid" ItemsSource="{Binding}" AutoGenerateColumns="False" CellEditEnding="CellEditEnding" CanUserResizeColumns="False" CanUserResizeRows="False" BeginningEdit="BeginningEdit">
+                <DataGrid Grid.Row="1" Name="pathDataGrid" ItemsSource="{Binding}" AutoGenerateColumns="False" CellEditEnding="CellEditEnding" CanUserResizeColumns="False" CanUserResizeRows="False" BeginningEdit="BeginningEdit"  ContextMenu="{StaticResource dataGridContextMenu}">
                     <DataGrid.Columns>
                         <DataGridTextColumn Width="*" Header="Value" Binding="{Binding Value}" />
                     </DataGrid.Columns>
@@ -61,11 +81,11 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <Label Grid.Row="0" Foreground="White">Other Environment Variables</Label>
-                <DataGrid Grid.Row="1" Name="environmentVariablesDataGrid" ItemsSource="{Binding}" AutoGenerateColumns="False" CellEditEnding="CellEditEnding" CanUserResizeRows="False" BeginningEdit="BeginningEdit">
+                <DataGrid Grid.Row="1" Name="environmentVariablesDataGrid" ItemsSource="{Binding}" AutoGenerateColumns="False" CellEditEnding="CellEditEnding" CanUserResizeRows="False" BeginningEdit="BeginningEdit" ContextMenu="{StaticResource dataGridContextMenu}">
                     <DataGrid.Columns>
                         <DataGridTextColumn Width="*" Header="Name" Binding="{Binding Key}" />
                         <DataGridTextColumn Width="*" Header="Value" Binding="{Binding Value}" />
-                        <DataGridTextColumn Width="Auto" Header="Target" Binding="{Binding Target}" />
+                        <DataGridTextColumn Width="Auto" Header="Target" Binding="{Binding Target}" MinWidth="60" />
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>
