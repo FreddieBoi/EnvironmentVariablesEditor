@@ -13,19 +13,26 @@ using System.Windows.Media;
 using System.Xml.Serialization;
 using Microsoft.Win32;
 
-namespace EnvironmentVariablesEditor
-{
+namespace EnvironmentVariablesEditor {
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : INotifyPropertyChanged
-    {
+    public partial class MainWindow : INotifyPropertyChanged {
 
         #region Fields
 
-        private readonly ObservableCollection<EnvironmentVariable> _environmentVariables = new ObservableCollection<EnvironmentVariable>();
+        private const string applicationName = "EnvironmentVariablesEditor";
 
-        private readonly ObservableCollection<PathEntry> _pathEntries = new ObservableCollection<PathEntry>();
+        private static readonly Version applicationVersion = Assembly.GetExecutingAssembly().GetName().Version;
+
+        private static readonly string applicationVersionName = string.Format("v{0}.{1}", applicationVersion.Major, applicationVersion.Minor, applicationVersion.Build, applicationVersion.Revision);
+
+        private static readonly string applicationVersionVerboseName = string.Format("v{0}.{1} Patch {2} Build {3}", applicationVersion.Major, applicationVersion.Minor, applicationVersion.Build, applicationVersion.Revision);
+
+        private readonly ObservableCollection<EnvironmentVariable> environmentVariables = new ObservableCollection<EnvironmentVariable>();
+
+        private readonly ObservableCollection<PathEntry> pathEntries = new ObservableCollection<PathEntry>();
 
         private const string DefaultFileDialogFileName = "EnvironmentVariables";
 
@@ -33,61 +40,52 @@ namespace EnvironmentVariablesEditor
 
         private const string DefaultFileDialogFilter = "Backup|*.bak|Plain Text|*.txt|XML|*.xml";
 
-        private IEditableObject _editedObject;
+        private IEditableObject editedObject;
 
-        private bool _edited;
+        private bool edited;
 
-        private bool IsEdited
-        {
-            get
-            {
-                return _edited;
+        private bool IsEdited {
+            get {
+                return edited;
             }
-            set
-            {
-                _edited = value;
+            set {
+                edited = value;
                 OnPropertyChanged("IsEdited");
             }
         }
 
         #endregion
 
-        public MainWindow()
-        {
+        public MainWindow() {
             InitializeComponent();
+
+            Title = string.Format("{0} ({1})", applicationName, applicationVersionName);
         }
 
         #region Private Helpers
 
-        private void LoadEnvironmentVariables()
-        {
+        private void LoadEnvironmentVariables() {
             workingStatus.Content = "Load...";
 
             // Clear lists
-            _pathEntries.Clear();
-            _environmentVariables.Clear();
+            pathEntries.Clear();
+            environmentVariables.Clear();
 
             // Get the environment variables
             var machineVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
             var userVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
 
             // Parse the result and put the variables in the correct lists
-            foreach (var key in userVariables.Keys)
-            {
-                _environmentVariables.Add(new EnvironmentVariable(key.ToString(), userVariables[key].ToString(), EnvironmentVariableTarget.User));
+            foreach (var key in userVariables.Keys) {
+                environmentVariables.Add(new EnvironmentVariable(key.ToString(), userVariables[key].ToString(), EnvironmentVariableTarget.User));
             }
-            foreach (var key in machineVariables.Keys)
-            {
-                if (key.ToString().Equals("Path"))
-                {
-                    foreach (var part in machineVariables[key].ToString().Split(';'))
-                    {
-                        _pathEntries.Add(new PathEntry(part));
+            foreach (var key in machineVariables.Keys) {
+                if (key.ToString().Equals("Path")) {
+                    foreach (var part in machineVariables[key].ToString().Split(';')) {
+                        pathEntries.Add(new PathEntry(part));
                     }
-                }
-                else
-                {
-                    _environmentVariables.Add(new EnvironmentVariable(key.ToString(), machineVariables[key].ToString(), EnvironmentVariableTarget.Machine));
+                } else {
+                    environmentVariables.Add(new EnvironmentVariable(key.ToString(), machineVariables[key].ToString(), EnvironmentVariableTarget.Machine));
                 }
             }
 
@@ -95,33 +93,28 @@ namespace EnvironmentVariablesEditor
             IsEdited = false;
 
             // Update the status
-            workingStatus.Content = String.Format("Loaded {0} path entries and {1} other environment variables.", _pathEntries.Count, _environmentVariables.Count);
+            workingStatus.Content = string.Format("Loaded {0} path entries and {1} other environment variables.", pathEntries.Count, environmentVariables.Count);
         }
 
-        private void SaveEnvironmentVariables()
-        {
+        private void SaveEnvironmentVariables() {
             workingStatus.Content = "Save...";
 
-            Environment.SetEnvironmentVariable("Path", String.Join(";", _pathEntries.Select(pathEntry => pathEntry.Value)), EnvironmentVariableTarget.Machine);
+            Environment.SetEnvironmentVariable("Path", string.Join(";", pathEntries.Select(pathEntry => pathEntry.Value)), EnvironmentVariableTarget.Machine);
 
-            foreach (var environmentVariable in _environmentVariables)
-            {
-                Environment.SetEnvironmentVariable(environmentVariable.Key, environmentVariable.Value,
-                                                   environmentVariable.Target);
+            foreach (var environmentVariable in environmentVariables) {
+                Environment.SetEnvironmentVariable(environmentVariable.Key, environmentVariable.Value, environmentVariable.Target);
             }
 
             // Set as unedited (since they're saved now)
             IsEdited = false;
 
             // Update the status
-            workingStatus.Content = String.Format("Saved {0} path entries and {1} other environment variables.", _pathEntries.Count, _environmentVariables.Count);
+            workingStatus.Content = string.Format("Saved {0} path entries and {1} other environment variables.", pathEntries.Count, environmentVariables.Count);
         }
 
-        private void Save()
-        {
+        private void Save() {
             // Make sure something was edited
-            if (!IsEdited)
-            {
+            if (!IsEdited) {
                 return;
             }
 
@@ -129,12 +122,9 @@ namespace EnvironmentVariablesEditor
             SaveEnvironmentVariables();
         }
 
-        private void Load()
-        {
-            if (IsEdited)
-            {
-                switch (MessageBox.Show("You have unsaved changes. Do you want to save them before reloading?", "Save changes before reloading?", MessageBoxButton.YesNoCancel, MessageBoxImage.Question))
-                {
+        private void Load() {
+            if (IsEdited) {
+                switch (MessageBox.Show("You have unsaved changes. Do you want to save them before reloading?", "Save changes before reloading?", MessageBoxButton.YesNoCancel, MessageBoxImage.Question)) {
                     case MessageBoxResult.Cancel:
                         // Don't do anything, get out!
                         return;
@@ -150,18 +140,19 @@ namespace EnvironmentVariablesEditor
             LoadEnvironmentVariables();
         }
 
-        private static void About()
-        {
+        private static void About() {
             var version = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion;
-            MessageBox.Show(String.Format(@"Environment Variables Editor {0}{1}2012 {2} Freddie Pettersson{3}{4}Environment Variables Editor is a simple editor to use when you want to modify the environment variables of a system. Mainly constructed to simplify editing of the Path variable. Written by Freddie Pettersson (freddieboi@gmail.com).", version, Environment.NewLine, "\u00a9", Environment.NewLine, Environment.NewLine), "About Environment Variables Editor", MessageBoxButton.OK, MessageBoxImage.Information);
+            var title = string.Format("About {0} {1}", applicationName, applicationVersionName);
+            var message = string.Format("{0} {1}{2}{2}A simple editor by FreddieBoi.{2}{2}Modify the environment variables of your system with simplified editing of the system Path variable.",
+                applicationName,
+                applicationVersionVerboseName,
+                Environment.NewLine);
+            MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private bool Exit()
-        {
-            if (IsEdited)
-            {
-                switch (MessageBox.Show("You have unsaved changes. Do you want to save them before exiting?", "Save changes before exiting?", MessageBoxButton.YesNoCancel, MessageBoxImage.Question))
-                {
+        private bool Exit() {
+            if (IsEdited) {
+                switch (MessageBox.Show("You have unsaved changes. Do you want to save them before exiting?", "Save changes before exiting?", MessageBoxButton.YesNoCancel, MessageBoxImage.Question)) {
                     case MessageBoxResult.Cancel:
                         // Don't do anything, cancel the closing
                         return false;
@@ -177,48 +168,50 @@ namespace EnvironmentVariablesEditor
             return true;
         }
 
-        private void Export()
-        {
+        private void Export() {
             workingStatus.Content = "Export...";
 
             // Create a SaveFileDialog.
-            var saveFileDialog = new SaveFileDialog
-                                     {
-                                         FileName = DefaultFileDialogFileName,
-                                         DefaultExt = DefaultFileDialogDefaultExt,
-                                         Filter = DefaultFileDialogFilter
-                                     };
+            var saveFileDialog = new SaveFileDialog {
+                FileName = DefaultFileDialogFileName,
+                DefaultExt = DefaultFileDialogDefaultExt,
+                Filter = DefaultFileDialogFilter
+            };
 
             // Show save file dialog box, abort if not successful
-            if (saveFileDialog.ShowDialog() != true) return;
+            if (saveFileDialog.ShowDialog() != true) {
+                workingStatus.Content = string.Empty;
+                return;
+            }
 
             // Save the objects to the specified file
             var writer = new StreamWriter(saveFileDialog.FileName);
             var serializer = new XmlSerializer(typeof(List<ExportableObject>));
             var objects = new List<ExportableObject>();
-            objects.AddRange(_pathEntries);
-            objects.AddRange(_environmentVariables);
+            objects.AddRange(pathEntries);
+            objects.AddRange(environmentVariables);
             serializer.Serialize(writer, objects);
             writer.Close();
 
             // Update the status
-            workingStatus.Content = String.Format("Exported {0} path entries and {1} other environment variables to {2}.", _pathEntries.Count, _environmentVariables.Count, saveFileDialog.FileName);
+            workingStatus.Content = String.Format("Exported {0} path entries and {1} other environment variables to {2}.", pathEntries.Count, environmentVariables.Count, saveFileDialog.FileName);
         }
 
-        private void Restore()
-        {
+        private void Restore() {
             workingStatus.Content = "Restore...";
 
             // Create an OpenFileDialog.
-            var openFileDialog = new OpenFileDialog
-                                     {
-                                         FileName = DefaultFileDialogFileName,
-                                         DefaultExt = DefaultFileDialogDefaultExt,
-                                         Filter = DefaultFileDialogFilter
-                                     };
+            var openFileDialog = new OpenFileDialog {
+                FileName = DefaultFileDialogFileName,
+                DefaultExt = DefaultFileDialogDefaultExt,
+                Filter = DefaultFileDialogFilter
+            };
 
             // Show open file dialog box, abort if not successful
-            if (openFileDialog.ShowDialog() != true) return;
+            if (openFileDialog.ShowDialog() != true) {
+                workingStatus.Content = string.Empty;
+                return;
+            }
 
             // Load objects from the specified file
             var reader = new StreamReader(openFileDialog.FileName);
@@ -227,17 +220,13 @@ namespace EnvironmentVariablesEditor
             reader.Close();
 
             // Put the objects in the appropriate lists (clear first)
-            _pathEntries.Clear();
-            _environmentVariables.Clear();
-            foreach (var obj in objects)
-            {
-                if (obj is PathEntry)
-                {
-                    _pathEntries.Add(obj as PathEntry);
-                }
-                else if (obj is EnvironmentVariable)
-                {
-                    _environmentVariables.Add(obj as EnvironmentVariable);
+            pathEntries.Clear();
+            environmentVariables.Clear();
+            foreach (var obj in objects) {
+                if (obj is PathEntry) {
+                    pathEntries.Add(obj as PathEntry);
+                } else if (obj is EnvironmentVariable) {
+                    environmentVariables.Add(obj as EnvironmentVariable);
                 }
             }
 
@@ -245,7 +234,7 @@ namespace EnvironmentVariablesEditor
             IsEdited = true;
 
             // Update status
-            workingStatus.Content = String.Format("Restored {0} path entries and {1} other environment variables from {2}.", _pathEntries.Count, _environmentVariables.Count, openFileDialog.FileName);
+            workingStatus.Content = string.Format("Restored {0} path entries and {1} other environment variables from {2}.", pathEntries.Count, environmentVariables.Count, openFileDialog.FileName);
         }
 
         #endregion
@@ -255,26 +244,20 @@ namespace EnvironmentVariablesEditor
         public event PropertyChangedEventHandler PropertyChanged;
 
         // Create the OnPropertyChanged method to raise the event
-        protected void OnPropertyChanged(string name)
-        {
+        protected void OnPropertyChanged(string name) {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
+            if (handler != null) {
                 handler(this, new PropertyChangedEventArgs(name));
             }
         }
 
-        private void HandlePropertyChanged(object sender, PropertyChangedEventArgs propertyChangedEventArgs)
-        {
+        private void HandlePropertyChanged(object sender, PropertyChangedEventArgs propertyChangedEventArgs) {
             if (!propertyChangedEventArgs.PropertyName.Equals("IsEdited")) return;
 
-            if (IsEdited)
-            {
+            if (IsEdited) {
                 editStatus.Content = "Unsaved changes!";
                 editStatus.Foreground = Brushes.Orange;
-            }
-            else
-            {
+            } else {
                 editStatus.Content = "No changes.";
                 editStatus.Foreground = Brushes.Green;
             }
@@ -284,115 +267,131 @@ namespace EnvironmentVariablesEditor
 
         #region WPF Events
 
-        private void WindowLoaded(object sender, RoutedEventArgs e)
-        {
+        private void WindowLoaded(object sender, RoutedEventArgs e) {
             // Load the environment variables
             LoadEnvironmentVariables();
 
             // Set the data context (populate the DataGrids)
-            pathDataGrid.DataContext = _pathEntries;
-            environmentVariablesDataGrid.DataContext = _environmentVariables;
+            pathDataGrid.DataContext = pathEntries;
+            environmentVariablesDataGrid.DataContext = environmentVariables;
 
             PropertyChanged = HandlePropertyChanged;
         }
 
-        private void LoadMenuItemClick(object sender, RoutedEventArgs e)
-        {
+        private void LoadMenuItemClick(object sender, RoutedEventArgs e) {
             Load();
         }
 
-        private void SaveMenuItemClick(object sender, RoutedEventArgs e)
-        {
+        private void SaveMenuItemClick(object sender, RoutedEventArgs e) {
             Save();
         }
 
-        private void ExitMenuItemClick(object sender, RoutedEventArgs e)
-        {
-            if (Exit())
-            {
+        private void ExitMenuItemClick(object sender, RoutedEventArgs e) {
+            if (Exit()) {
                 Close();
             }
         }
 
-        private void AboutMenuItemClick(object sender, RoutedEventArgs e)
-        {
+        private void AboutMenuItemClick(object sender, RoutedEventArgs e) {
             About();
         }
 
-        private void BeginningEdit(object sender, DataGridBeginningEditEventArgs e)
-        {
-            if (sender.Equals(pathDataGrid))
-            {
-                _editedObject = pathDataGrid.Items.GetItemAt(e.Row.GetIndex()) as PathEntry;
-            }
-            else if (sender.Equals(environmentVariablesDataGrid))
-            {
-                _editedObject = environmentVariablesDataGrid.Items.GetItemAt(e.Row.GetIndex()) as EnvironmentVariable;
+        private void BeginningEdit(object sender, DataGridBeginningEditEventArgs e) {
+            if (sender.Equals(pathDataGrid)) {
+                editedObject = pathDataGrid.Items.GetItemAt(e.Row.GetIndex()) as PathEntry;
+            } else if (sender.Equals(environmentVariablesDataGrid)) {
+                editedObject = environmentVariablesDataGrid.Items.GetItemAt(e.Row.GetIndex()) as EnvironmentVariable;
             }
         }
 
-        private void CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
-        {
+        private void CellEditEnding(object sender, DataGridCellEditEndingEventArgs e) {
             if (e.EditAction != DataGridEditAction.Commit) return;
 
-            if (sender.Equals(pathDataGrid))
-            {
-                if (((PathEntry)_editedObject).Value != ((TextBox)e.EditingElement).Text)
-                {
+            if (sender.Equals(pathDataGrid)) {
+                if (((PathEntry)editedObject).Value != ((TextBox)e.EditingElement).Text) {
                     IsEdited = true;
                 }
-            }
-            else if (sender.Equals(environmentVariablesDataGrid))
-            {
-                if (_editedObject == null || e.EditingElement == null || ((EnvironmentVariable)_editedObject).Value != ((TextBox)e.EditingElement).Text)
-                {
+            } else if (sender.Equals(environmentVariablesDataGrid)) {
+                if (editedObject == null || e.EditingElement == null || ((EnvironmentVariable)editedObject).Value != ((TextBox)e.EditingElement).Text) {
                     IsEdited = true;
                 }
             }
         }
 
-        private void WindowClosing(object sender, CancelEventArgs e)
-        {
+        private void WindowClosing(object sender, CancelEventArgs e) {
             e.Cancel = !Exit();
         }
 
-        private void ExportMenuItemClick(object sender, RoutedEventArgs e)
-        {
+        private void ExportMenuItemClick(object sender, RoutedEventArgs e) {
             Export();
         }
 
-        private void RestoreMenuItemClick(object sender, RoutedEventArgs e)
-        {
+        private void RestoreMenuItemClick(object sender, RoutedEventArgs e) {
             Restore();
+        }
+
+        private void EditMenuItemClick(object sender, RoutedEventArgs e) {
+            pathDataGrid.BeginEdit();
+        }
+
+        private void CutMenuItemClick(object sender, RoutedEventArgs e) {
+
+        }
+
+        private void CopyMenuItemClick(object sender, RoutedEventArgs e) {
+
+        }
+
+        private void PasteMenuItemClick(object sender, RoutedEventArgs e) {
+
+        }
+
+        private void DeleteMenuItemClick(object sender, RoutedEventArgs e) {
+
         }
 
         #endregion
 
         #region Command Events
 
-        private void Load(object sender, ExecutedRoutedEventArgs e)
-        {
+        private void Load(object sender, ExecutedRoutedEventArgs e) {
             Load();
         }
 
-        private void Save(object sender, ExecutedRoutedEventArgs e)
-        {
+        private void Save(object sender, ExecutedRoutedEventArgs e) {
             Save();
         }
 
-        private void About(object sender, ExecutedRoutedEventArgs e)
-        {
+        private void About(object sender, ExecutedRoutedEventArgs e) {
             About();
         }
 
-        private void Export(object sender, ExecutedRoutedEventArgs e)
-        {
+        private void Export(object sender, ExecutedRoutedEventArgs e) {
             Export();
         }
 
-        private void Restore(object sender, ExecutedRoutedEventArgs e)
-        {
+        private void Restore(object sender, ExecutedRoutedEventArgs e) {
             Restore();
+        }
+
+        private void Edit(object sender, ExecutedRoutedEventArgs e) {
+            pathDataGrid.BeginEdit(e);
+        }
+
+        private void Cut(object sender, ExecutedRoutedEventArgs e) {
+
+        }
+
+        private void Copy(object sender, ExecutedRoutedEventArgs e) {
+
+        }
+
+        private void Paste(object sender, ExecutedRoutedEventArgs e) {
+
+        }
+
+        private void Delete(object sender, ExecutedRoutedEventArgs e) {
+
         }
 
         #endregion

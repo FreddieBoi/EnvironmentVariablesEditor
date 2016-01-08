@@ -1,4 +1,7 @@
-_ReSharper*
-*.suo
-*obj/*
-*bin/*
+*suo
+*Resharper*
+*.DotSettings.*
+
+# Build Folders
+bin
+obj
